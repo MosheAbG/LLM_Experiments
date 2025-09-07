@@ -1,6 +1,10 @@
 import requests
+import logging
+from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from typing import Optional
+logging.basicConfig(level=logging.INFO
+                    , format='%(asctime)s - %(levelname)s - %(message)s')
 class Website:
     """A class to extract and clean text content from a website.
     
@@ -11,6 +15,13 @@ class Website:
         content (str): The cleaned text content extracted from the website.
     """
     def __init__(self, url: str):
+        """Initializes the Website class with a URL and sets up headers for requests.
+        Args:
+            url (str): The URL of the website to extract content from.
+        """
+
+        if not urlparse(url).scheme:
+            url = "http://" + url
         self.url = url
         self.title = ""
         self.description = ""
@@ -18,6 +29,21 @@ class Website:
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
         }
+    
+    def _is_value(self, url: str) -> bool:
+        """Checks if the URL is valid.
+        Args:
+            url (str): The URL to check.
+        Returns:
+            bool: True if the URL is valid, False otherwise.
+        """
+        try:
+            result = urlparse(url)
+            if all([result.scheme, result.netloc]):
+                return True
+        except Exception as e:
+            logging.error(f"Error parsing URL: {e}")
+            return False
 
     def extract_content(self) -> Optional[str]:
         """Extracts and cleans text from a website.
@@ -60,9 +86,15 @@ class Website:
         Returns:
             str: The cleaned text content. 
             """
-        unwanted_tags = ["script", "style", "noscript", "iframe", "ad", "img", "form", "nav", "aside"]  
-        for script in soup(unwanted_tags):
-            script.decompose()
+        unwanted_tags = ["script", "style", "noscript", "iframe", "ad", "img", "form", "nav", "aside",
+                         "link", "button", "figure", "input"]  
+        for tag in unwanted_tags:
+            for element in soup.find_all(tag):
+                element.decompose()
+        # Remove empty tags
+        for element in soup.find_all():
+            if not element.get_text(strip=True):
+                element.decompose()
         return soup.get_text(separator="\n", strip=True)
 
 if __name__ == "__main__":
