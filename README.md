@@ -1,2 +1,4 @@
 # LLM_Experiments
-A space where LLM experiments of all forms
+A space for LLM experiments of all forms
+
+The first experiment will involve cleaning up a financial article and then summarizing the key points.
